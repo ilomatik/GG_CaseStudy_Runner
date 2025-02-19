@@ -1,6 +1,8 @@
 using Cinemachine;
 using DG.Tweening;
+using Enums;
 using Events;
+using ScriptableObjects;
 using UnityEngine;
 
 namespace Views
@@ -9,32 +11,51 @@ namespace Views
     {
         [SerializeField] private GameObject _characterPrefab;
         [SerializeField] private GameObject _wayObject;
+        [SerializeField] private GameObject _levelEndPlatform;
         [SerializeField] private Transform  _characterParent;
         [SerializeField] private Transform  _wayParent;
-        [SerializeField] private float      _moveSpeed = 2.0f;
 
-        private GameObject               _previousWay;
-        private GameObject               _currentWay;
+        private GameVariables            _gameVariables;
+        private WayView                  _previousWay;
+        private WayView                  _currentWay;
         private CharacterView            _character;
-        private bool                     _isMovingRight = true;
+        private GameObject               _levelEndPlatformObject;
+        private bool                     _spawnRight = true;
         private bool                     _canMove = true;
         private bool                     _isFinished;
         private float                    _overlap;
+        private float                    _wayMoveDistance;
         private Tween                    _moveTween;
         private Tween                    _cameraTween;
         private Transform                _levelEndCameraParent;
         private CinemachineVirtualCamera _cineMachineCameraCharacterFollower;
         private CinemachineVirtualCamera _cineMachineCameraLevelEnd;
-
-        public void StartLevel()
+        
+        public void Initialize(GameVariables gameVariables)
         {
-            _character                = Instantiate(_characterPrefab, 
-                                                    new Vector3(0f, 0f, -1f),
-                                                    Quaternion.identity, 
-                                                    _characterParent)
-                                                    .GetComponent<CharacterView>();
-            _currentWay               = Instantiate(_wayObject, _wayParent);
-            _previousWay              = _currentWay;
+            _gameVariables = gameVariables;
+
+            _wayMoveDistance = _gameVariables.WayMoveDistance;
+        }
+
+        public void StartLevel(int wayCount)
+        {
+            float wayLocalZScale = _wayObject.transform.localScale.z;
+            
+            _character              = Instantiate(_characterPrefab, 
+                                                  new Vector3(0f, 0.5f, 0f),
+                                                  Quaternion.identity, 
+                                                  _characterParent)
+                                                  .GetComponent<CharacterView>();
+            _currentWay             = Instantiate(_wayObject, 
+                                                  new Vector3(-2f, 0f, wayLocalZScale), 
+                                                  Quaternion.identity, 
+                                                  _wayParent)
+                                                  .GetComponent<WayView>();
+            _levelEndPlatformObject = Instantiate(_levelEndPlatform, 
+                                                  new Vector3(0f, 0f, wayCount * wayLocalZScale), 
+                                                  Quaternion.identity);
+            _previousWay            = _currentWay;
             
             _cineMachineCameraCharacterFollower.Follow = _character.transform;
             _cineMachineCameraCharacterFollower.LookAt = _character.transform;
@@ -48,8 +69,9 @@ namespace Views
                 _cameraTween = null;
             }
             
-            _levelEndCameraParent.SetParent(_character.transform);
-            _levelEndCameraParent.localPosition = new Vector3(0f, 0f, 0f);
+            _character.SetSpeed(_gameVariables.CharacterMoveSpeed);
+            _levelEndCameraParent.SetParent(_characterParent);
+            _currentWay.SetMoveSpeed(_gameVariables.WayMoveDuration);
             
             MoveCurrentWay();
         }
@@ -60,6 +82,7 @@ namespace Views
             _isFinished = true;
             _moveTween.Kill();
             
+            SetCharacterState(CharacterState.Dancing);
             RotateCameraAroundCharacter();
         }
         
@@ -71,6 +94,8 @@ namespace Views
             _levelEndCameraParent = cineMachineCameraLevelEnd.transform.parent;
         }
 
+        #region Way Cutting
+
         public void OnTouchScreen()
         {
             if (!_canMove)    return;
@@ -80,7 +105,7 @@ namespace Views
             SpawnNextWay();
             MoveCurrentWay();
         }
-
+        
         private void MoveCurrentWay()
         {
             if (_moveTween != null)
@@ -88,13 +113,10 @@ namespace Views
                 _moveTween.Kill();
                 _moveTween = null;
             }
+
+            float nextWayX = _spawnRight ? _wayMoveDistance : -_wayMoveDistance;
             
-            float targetX = _isMovingRight ? 3.0f : -3.0f;
-            
-            _moveTween = _currentWay.transform.DOMoveX(targetX, _moveSpeed)
-                                              .OnComplete(() => { _isMovingRight = !_isMovingRight; })
-                                              .SetLoops(-1, LoopType.Yoyo)
-                                              .SetEase(Ease.Linear);
+            _moveTween = _currentWay.MoveWay(-nextWayX);
         }
 
         private bool CutObject()
@@ -159,17 +181,34 @@ namespace Views
 
         private void SpawnNextWay()
         {
-            float nextWayX = _currentWay.transform.position.x;
-            _currentWay    = Instantiate(_wayObject, _wayParent);
+            float nextWayX = _spawnRight ? _wayMoveDistance : -_wayMoveDistance;
+            _currentWay    = Instantiate(_wayObject, _wayParent).GetComponent<WayView>();
+            
+            _currentWay.SetMoveSpeed(_gameVariables.WayMoveDuration);
             
             _currentWay.transform.position   = new Vector3(nextWayX, _previousWay.transform.position.y, _previousWay.transform.position.z + _previousWay.transform.localScale.z);
             _currentWay.transform.localScale = new Vector3(_overlap, _currentWay.transform.localScale.y, _currentWay.transform.localScale.z);
+            
+            _spawnRight = !_spawnRight; 
         }
+        
+        #endregion
+
+        #region Character
+
+        public void SetCharacterState(CharacterState state)
+        {
+            _character.SetState(state);
+        }
+
+        #endregion
 
         private void RotateCameraAroundCharacter()
         {
             _cineMachineCameraCharacterFollower.gameObject.SetActive(false);
             _cineMachineCameraLevelEnd         .gameObject.SetActive(true);
+            
+            _levelEndCameraParent.localPosition = _character.transform.localPosition;
             
             _cameraTween = _levelEndCameraParent.DOLocalRotate(new Vector3(0, 360, 0), 5.0f, RotateMode.FastBeyond360)
                                                 .SetEase(Ease.Linear)

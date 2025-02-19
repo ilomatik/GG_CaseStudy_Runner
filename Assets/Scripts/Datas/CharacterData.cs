@@ -13,7 +13,7 @@ namespace Datas
         
         public void ResetState()
         {
-            State = CharacterState.Idle;
+            State = CharacterState.Running;
         }
     }
 }

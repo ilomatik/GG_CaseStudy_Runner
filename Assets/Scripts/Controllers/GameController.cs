@@ -17,13 +17,12 @@ namespace Controllers
             _view = view;
         }
         
-        public void LoadLevel(CinemachineVirtualCamera cineMachineCameraCharacterFollower, CinemachineVirtualCamera cineMachineCameraLevelEnd)
+        public void LoadLevel(int wayCount, CinemachineVirtualCamera cineMachineCameraCharacterFollower, CinemachineVirtualCamera cineMachineCameraLevelEnd)
         {
             Debug.Log("Load Level");
             _data.ResetState();
-            _data.ResetWayCount();
             _view.SetCineMachineCamera(cineMachineCameraCharacterFollower, cineMachineCameraLevelEnd);
-            _view.StartLevel();
+            _view.StartLevel(wayCount);
         }
         
         public void SubscribeEvents()
@@ -51,12 +50,7 @@ namespace Controllers
         
         private void OnWayCutSuccess()
         {
-            _data.IncreaseWayCount();
             
-            if (_data.WayCount >= 5)
-            {
-                GameEvents.LevelSuccess();
-            }
         }
         
         private void LevelSuccess()
