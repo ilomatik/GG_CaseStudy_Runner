@@ -10,7 +10,8 @@ namespace  Managers
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private GameObject               _gameView;
-        [SerializeField] private CinemachineVirtualCamera _cinemachineCamera;
+        [SerializeField] private CinemachineVirtualCamera _cineMachineCameraCharacterFollower;
+        [SerializeField] private CinemachineVirtualCamera _cineMachineCameraLevelEnd;
 
         private GameController _gameController;
         
@@ -20,7 +21,7 @@ namespace  Managers
             
             _gameController = new GameController(view);
             _gameController.SubscribeEvents();
-            _gameController.LoadLevel(_cinemachineCamera);
+            _gameController.LoadLevel(_cineMachineCameraCharacterFollower, _cineMachineCameraLevelEnd);
         }
 
         private void Update()

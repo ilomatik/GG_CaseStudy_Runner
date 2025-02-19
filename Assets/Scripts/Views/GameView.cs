@@ -1,15 +1,16 @@
-using System.Collections;
 using Cinemachine;
 using DG.Tweening;
+using Events;
 using UnityEngine;
 
 namespace Views
 {
     public class GameView : MonoBehaviour
     {
-        [SerializeField] private GameObject _wayObject;
-        [SerializeField] private Transform  _wayParent;
         [SerializeField] private GameObject _characterPrefab;
+        [SerializeField] private GameObject _wayObject;
+        [SerializeField] private Transform  _characterParent;
+        [SerializeField] private Transform  _wayParent;
         [SerializeField] private float      _moveSpeed = 2.0f;
 
         private GameObject               _previousWay;
@@ -19,46 +20,62 @@ namespace Views
         private bool                     _canMove = true;
         private bool                     _isFinished;
         private float                    _overlap;
-        private float                    _orbitSpeed = 50f;
         private Tween                    _moveTween;
-        private int                      _wayCounter;
-        private CinemachineVirtualCamera _cineMachineCamera;
+        private Tween                    _cameraTween;
+        private Transform                _levelEndCameraParent;
+        private CinemachineVirtualCamera _cineMachineCameraCharacterFollower;
+        private CinemachineVirtualCamera _cineMachineCameraLevelEnd;
 
         public void StartLevel()
         {
-            _character                = Instantiate(_characterPrefab, _wayParent).GetComponent<CharacterView>();
+            _character                = Instantiate(_characterPrefab, 
+                                                    new Vector3(0f, 0f, -1f),
+                                                    Quaternion.identity, 
+                                                    _characterParent)
+                                                    .GetComponent<CharacterView>();
             _currentWay               = Instantiate(_wayObject, _wayParent);
             _previousWay              = _currentWay;
-            _cineMachineCamera.Follow = _character.transform;
-            _cineMachineCamera.LookAt = _character.transform;
-            _wayCounter               = 0;
+            
+            _cineMachineCameraCharacterFollower.Follow = _character.transform;
+            _cineMachineCameraCharacterFollower.LookAt = _character.transform;
+            
+            _cineMachineCameraCharacterFollower.gameObject.SetActive(true);
+            _cineMachineCameraLevelEnd         .gameObject.SetActive(false);
+
+            if (_cameraTween != null)
+            {
+                _cameraTween.Kill();
+                _cameraTween = null;
+            }
+            
+            _levelEndCameraParent.SetParent(_character.transform);
+            _levelEndCameraParent.localPosition = new Vector3(0f, 0f, 0f);
+            
             MoveCurrentWay();
         }
 
         public void FinishLevel()
         {
-            _canMove = false;
+            _canMove    = false;
             _isFinished = true;
             _moveTween.Kill();
-            _wayCounter = 0;
+            
+            RotateCameraAroundCharacter();
         }
         
-        public void SetCineMachineCamera(CinemachineVirtualCamera cineMachineCamera)
+        public void SetCineMachineCamera(CinemachineVirtualCamera cineMachineCameraCharacterFollower, CinemachineVirtualCamera cineMachineCameraLevelEnd)
         {
-            _cineMachineCamera = cineMachineCamera;
+            _cineMachineCameraCharacterFollower = cineMachineCameraCharacterFollower;
+            _cineMachineCameraLevelEnd          = cineMachineCameraLevelEnd;
+            
+            _levelEndCameraParent = cineMachineCameraLevelEnd.transform.parent;
         }
 
         public void OnTouchScreen()
         {
             if (!_canMove)    return;
             if (!CutObject()) return;
-
-            _wayCounter++;
-            if (_wayCounter >= 5)
-            {
-                //RotateCameraAroundCharacter();
-                FinishLevel();
-            }
+            if (_isFinished)  return;
                 
             SpawnNextWay();
             MoveCurrentWay();
@@ -66,6 +83,12 @@ namespace Views
 
         private void MoveCurrentWay()
         {
+            if (_moveTween != null)
+            {
+                _moveTween.Kill();
+                _moveTween = null;
+            }
+            
             float targetX = _isMovingRight ? 3.0f : -3.0f;
             
             _moveTween = _currentWay.transform.DOMoveX(targetX, _moveSpeed)
@@ -110,6 +133,7 @@ namespace Views
 
                     GameObject nonOverlapObject = Instantiate(_wayObject, nonOverlapPosition, Quaternion.identity, _wayParent);
                     nonOverlapObject.transform.localScale = nonOverlapScale;
+                    nonOverlapObject.layer = 7; // Set the layer to "CuttedWay" layer
 
                     // Apply gravity and destroy after delay
                     Rigidbody rb = nonOverlapObject.AddComponent<Rigidbody>();
@@ -119,6 +143,8 @@ namespace Views
                 // Move character to the top center of the current way
                 Vector3 characterPosition = new Vector3(remainingPosition.x, remainingPosition.y + remainingSize.y / 2, remainingPosition.z);
                 _character.MoveTo(characterPosition);
+                
+                ViewEvents.WayCutSuccess();
             }
             else
             {
@@ -135,24 +161,19 @@ namespace Views
         {
             float nextWayX = _currentWay.transform.position.x;
             _currentWay    = Instantiate(_wayObject, _wayParent);
-            _currentWay.transform.position = new Vector3(nextWayX, _previousWay.transform.position.y, _previousWay.transform.position.z + _previousWay.transform.localScale.z);
+            
+            _currentWay.transform.position   = new Vector3(nextWayX, _previousWay.transform.position.y, _previousWay.transform.position.z + _previousWay.transform.localScale.z);
             _currentWay.transform.localScale = new Vector3(_overlap, _currentWay.transform.localScale.y, _currentWay.transform.localScale.z);
         }
 
         private void RotateCameraAroundCharacter()
         {
-            Vector3 characterPosition = _character.transform.position;
-            float radius = 5.0f; // Adjust the radius as needed
-            float duration = 5.0f; // Duration for one full circle
-
-            _cineMachineCamera.transform.DOMove(new Vector3(characterPosition.x + radius, characterPosition.y, characterPosition.z), 0.1f)
-                .OnComplete(() =>
-                {
-                    _cineMachineCamera.transform.DOLocalMoveX(-radius, duration)
-                        .SetRelative()
-                        .SetEase(Ease.Linear)
-                        .SetLoops(-1, LoopType.Restart);
-                });
+            _cineMachineCameraCharacterFollower.gameObject.SetActive(false);
+            _cineMachineCameraLevelEnd         .gameObject.SetActive(true);
+            
+            _cameraTween = _levelEndCameraParent.DOLocalRotate(new Vector3(0, 360, 0), 5.0f, RotateMode.FastBeyond360)
+                                                .SetEase(Ease.Linear)
+                                                .SetLoops(-1, LoopType.Restart);
         }
     }
 }
