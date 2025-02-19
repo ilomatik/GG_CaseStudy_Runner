@@ -1,3 +1,4 @@
+using Cinemachine;
 using Datas;
 using Events;
 using UnityEngine;
@@ -16,9 +17,11 @@ namespace Controllers
             _view = view;
         }
         
-        public void LoadLevel()
+        public void LoadLevel(CinemachineVirtualCamera cineMachineCamera)
         {
             Debug.Log("Load Level");
+            _view.SetCineMachineCamera(cineMachineCamera);
+            _view.StartLevel();
         }
         
         public void SubscribeEvents()
@@ -34,6 +37,18 @@ namespace Controllers
         private void OnTouchScreen()
         {
             _view.OnTouchScreen();
+        }
+        
+        private void LevelSuccess()
+        {
+            Debug.Log("Level Success");
+            _view.FinishLevel();
+        }
+        
+        private void LevelFail()
+        {
+            Debug.Log("Level Fail");
+            _view.FinishLevel();
         }
     }
 }

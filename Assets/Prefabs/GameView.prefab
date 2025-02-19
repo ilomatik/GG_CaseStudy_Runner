@@ -78,3 +78,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _wayObject: {fileID: 357003095087704437, guid: b6f7467367ac0b34583aab9e859224fc, type: 3}
   _wayParent: {fileID: 3633158255386630510}
+  _characterPrefab: {fileID: 2085811439353616268, guid: b4a690fde890a4b48b653fbbdf9cdf07, type: 3}
+  _moveSpeed: 2

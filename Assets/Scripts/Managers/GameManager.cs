@@ -1,4 +1,5 @@
 using System;
+using Cinemachine;
 using Controllers;
 using Events;
 using UnityEngine;
@@ -8,7 +9,8 @@ namespace  Managers
 {
     public class GameManager : MonoBehaviour
     {
-        [SerializeField] private GameObject _gameView;
+        [SerializeField] private GameObject               _gameView;
+        [SerializeField] private CinemachineVirtualCamera _cinemachineCamera;
 
         private GameController _gameController;
         
@@ -18,7 +20,7 @@ namespace  Managers
             
             _gameController = new GameController(view);
             _gameController.SubscribeEvents();
-            _gameController.LoadLevel();
+            _gameController.LoadLevel(_cinemachineCamera);
         }
 
         private void Update()
