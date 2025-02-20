@@ -35,7 +35,7 @@ namespace Views
             _rigidbody.useGravity = true;
             _rigidbody.constraints = RigidbodyConstraints.None;
             
-            DOVirtual.DelayedCall(5f, () => Destroy(gameObject));
+            DOVirtual.DelayedCall(10f, () => Destroy(gameObject));
         }
     }
 }

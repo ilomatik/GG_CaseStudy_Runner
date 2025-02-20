@@ -44,7 +44,7 @@ namespace Views
                 await Task.Delay(50);
             }
             
-            await Task.Delay(3000);
+            await Task.Delay(10000);
             
             Destroy(gameObject);
         }

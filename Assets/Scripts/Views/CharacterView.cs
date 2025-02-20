@@ -38,7 +38,6 @@ namespace Views
         
         public void SetState(CharacterState state)
         {
-            Debug.Log("SetState: " + state);
             switch (state)
             {
                 case CharacterState.Running:
