@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterMoveSpeed: 1
   _wayMoveDuration: 1
-  _wayMoveDistance: 2
+  _wayMoveDistance: 3
   _levelWayCount: 5

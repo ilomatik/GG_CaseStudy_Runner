@@ -4,7 +4,8 @@ namespace Datas
 {
     public class GameData
     {
-        public GameState State    { get; private set; }
+        public GameState State         { get; private set; }
+        public int       LevelWayCount { get; private set; }
         
         public GameData()
         {
@@ -14,6 +15,11 @@ namespace Datas
         public void SetState(GameState state)
         {
             State = state;
+        }
+        
+        public void IncreaseLevelWayCount()
+        {
+            LevelWayCount++;
         }
         
         public void ResetState()

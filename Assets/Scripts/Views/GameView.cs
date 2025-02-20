@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cinemachine;
 using DG.Tweening;
 using Enums;
@@ -24,6 +25,7 @@ namespace Views
         private bool                     _spawnRight = true;
         private bool                     _canMove = true;
         private bool                     _isFinished;
+        private bool                     _canSpawnNextWay;
         private float                    _overlap;
         private float                    _wayMoveDistance;
         private Tween                    _moveTween;
@@ -32,10 +34,13 @@ namespace Views
         private CinemachineVirtualCamera _cineMachineCameraCharacterFollower;
         private CinemachineVirtualCamera _cineMachineCameraLevelEnd;
         
+        private List<WayView> _wayObjects;
+
         public void Initialize(GameVariables gameVariables)
         {
             _gameVariables   = gameVariables;
             _wayMoveDistance = _gameVariables.WayMoveDistance;
+            _wayObjects      = new List<WayView>();
         }
 
         #region Level Start
@@ -52,13 +57,15 @@ namespace Views
             _levelEndCameraParent.SetParent(_characterParent);
             _currentWay          .SetMoveSpeed(_gameVariables.WayMoveDuration);
             
+            _canSpawnNextWay = true;
+            
             MoveCurrentWay();
             SetCharacterState(CharacterState.Running);
         }
         
         private void SpawnCharacter()
         {
-            Vector3 characterPosition = new Vector3(0f, 0.5f, 0f);
+            Vector3 characterPosition = new Vector3(0f, 0.5f, -2f);
             _character = Instantiate(_characterPrefab, 
                                      characterPosition, 
                                      Quaternion.identity,
@@ -77,13 +84,15 @@ namespace Views
                                       _wayParent)
                                       .GetComponent<WayView>();
             
+            _currentWay.TurnOffGravity();
             _previousWay = _currentWay;
+            _wayObjects.Add(_currentWay);
         }
         
         private void SpawnLevelEndPlatform(int wayCount)
         {
             float   wayLocalZScale   = _wayObject.transform.localScale.z;
-            Vector3 levelEndPosition = new Vector3(0f, 0f, wayCount * wayLocalZScale);
+            Vector3 levelEndPosition = new Vector3(0f, 0f, (wayCount + 1) * wayLocalZScale);
             
             _levelEndPlatformObject = Instantiate(_levelEndPlatform, 
                                                   levelEndPosition, 
@@ -94,6 +103,13 @@ namespace Views
         {
             Vector3 backgroundPosition = new Vector3(0f, 0f, 0f);
             Instantiate(_background, backgroundPosition, Quaternion.identity);
+        }
+        public void SetCineMachineCamera(CinemachineVirtualCamera cineMachineCameraCharacterFollower, CinemachineVirtualCamera cineMachineCameraLevelEnd)
+        {
+            _cineMachineCameraCharacterFollower = cineMachineCameraCharacterFollower;
+            _cineMachineCameraLevelEnd          = cineMachineCameraLevelEnd;
+            
+            _levelEndCameraParent = cineMachineCameraLevelEnd.transform.parent;
         }
 
         private void SetLevelStartCamera()
@@ -113,34 +129,58 @@ namespace Views
         
         #endregion
 
-        public void FinishLevel()
-        {
-            _canMove    = false;
-            _isFinished = true;
-            _moveTween.Kill();
+        #region Level Finish
 
+        public void OnLevelFail()
+        {
+            OnLevelFinish();
             SetCharacterState(CharacterState.Dancing);
             RotateCameraAroundCharacter();
         }
         
-        public void SetCineMachineCamera(CinemachineVirtualCamera cineMachineCameraCharacterFollower, CinemachineVirtualCamera cineMachineCameraLevelEnd)
+        public void OnLevelSuccess()
         {
-            _cineMachineCameraCharacterFollower = cineMachineCameraCharacterFollower;
-            _cineMachineCameraLevelEnd          = cineMachineCameraLevelEnd;
-            
-            _levelEndCameraParent = cineMachineCameraLevelEnd.transform.parent;
+            OnLevelFinish();
+            DropWayObjects();
+            SetCharacterState(CharacterState.Dancing);
+            RotateCameraAroundCharacter();
         }
+
+        private void OnLevelFinish()
+        {
+            _canMove    = false;
+            _isFinished = true;
+            _moveTween.Kill();
+        }
+        
+        private void DropWayObjects()
+        {
+            foreach (var wayObject in _wayObjects)
+            {
+                wayObject.TurnOnGravity();
+            }
+            
+            _wayObjects.Clear();
+        }
+        
+        #endregion
 
         #region Way Cutting
 
         public void OnTouchScreen()
         {
-            if (!_canMove)    return;
-            if (!CutObject()) return;
-            if (_isFinished)  return;
+            if (!_canMove)         return;
+            if (!CutObject())      return;
+            if (_isFinished)       return;
+            if (!_canSpawnNextWay) return;
                 
             SpawnNextWay();
             MoveCurrentWay();
+        }
+        
+        public void SetCanSpawnNextWay(bool canSpawnNextWay)
+        {
+            _canSpawnNextWay = canSpawnNextWay;
         }
         
         private void MoveCurrentWay()
@@ -194,8 +234,7 @@ namespace Views
                     nonOverlapObject.transform.localScale = nonOverlapScale;
                     nonOverlapObject.layer = 7; // Set the layer to "CuttedWay" layer
 
-                    // Apply gravity and destroy after delay
-                    Rigidbody rb = nonOverlapObject.AddComponent<Rigidbody>();
+                    nonOverlapObject.GetComponent<WayView>().TurnOnGravity();
                     Destroy(nonOverlapObject, 2.0f); // Adjust the delay as needed
                 }
 
@@ -207,9 +246,10 @@ namespace Views
             else
             {
                 Debug.Log("No overlap, game over!");
-                _canMove = false;
+                _canMove    = false;
                 _isFinished = true;
                 _moveTween.Kill();
+                GameEvents.LevelFail();
             }
 
             return _overlap > 0;
@@ -219,12 +259,13 @@ namespace Views
         {
             float nextWayX = _spawnRight ? _wayMoveDistance : -_wayMoveDistance;
             _currentWay    = Instantiate(_wayObject, _wayParent).GetComponent<WayView>();
-            
             _currentWay.SetMoveSpeed(_gameVariables.WayMoveDuration);
+            _currentWay.TurnOffGravity();
             
             _currentWay.transform.position   = new Vector3(nextWayX, _previousWay.transform.position.y, _previousWay.transform.position.z + _previousWay.transform.localScale.z);
             _currentWay.transform.localScale = new Vector3(_overlap, _currentWay.transform.localScale.y, _currentWay.transform.localScale.z);
             
+            _wayObjects.Add(_currentWay);
             _spawnRight = !_spawnRight; 
         }
         
