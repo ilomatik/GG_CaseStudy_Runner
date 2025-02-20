@@ -38,25 +38,59 @@ namespace Views
             _wayMoveDistance = _gameVariables.WayMoveDistance;
         }
 
+        #region Level Start
+
         public void StartLevel(int wayCount)
         {
+            SpawnCharacter();
+            SpawnCurrentWay();
+            SpawnLevelEndPlatform(wayCount);
+            SetLevelStartCamera();
+            
+            _character           .SetSpeed(_gameVariables.CharacterMoveSpeed);
+            _levelEndCameraParent.SetParent(_characterParent);
+            _currentWay          .SetMoveSpeed(_gameVariables.WayMoveDuration);
+            
+            MoveCurrentWay();
+            SetCharacterState(CharacterState.Running);
+        }
+        
+        private void SpawnCharacter()
+        {
+            Vector3 characterPosition = new Vector3(0f, 0.5f, 0f);
+            _character = Instantiate(_characterPrefab, 
+                                     characterPosition, 
+                                     Quaternion.identity,
+                                     _characterParent)
+                                     .GetComponent<CharacterView>();
+        }
+
+        private void SpawnCurrentWay()
+        {
             float wayLocalZScale = _wayObject.transform.localScale.z;
+            Vector3 wayPosition  = new Vector3(-2f, 0f, wayLocalZScale);
             
-            _character              = Instantiate(_characterPrefab, 
-                                                  new Vector3(0f, 0.5f, 0f),
-                                                  Quaternion.identity, 
-                                                  _characterParent)
-                                                  .GetComponent<CharacterView>();
-            _currentWay             = Instantiate(_wayObject, 
-                                                  new Vector3(-2f, 0f, wayLocalZScale), 
-                                                  Quaternion.identity, 
-                                                  _wayParent)
-                                                  .GetComponent<WayView>();
+            _currentWay = Instantiate(_wayObject, 
+                                      wayPosition, 
+                                      Quaternion.identity, 
+                                      _wayParent)
+                                      .GetComponent<WayView>();
+            
+            _previousWay = _currentWay;
+        }
+        
+        private void SpawnLevelEndPlatform(int wayCount)
+        {
+            float   wayLocalZScale   = _wayObject.transform.localScale.z;
+            Vector3 levelEndPosition = new Vector3(0f, 0f, wayCount * wayLocalZScale);
+            
             _levelEndPlatformObject = Instantiate(_levelEndPlatform, 
-                                                  new Vector3(0f, 0f, wayCount * wayLocalZScale), 
+                                                  levelEndPosition, 
                                                   Quaternion.identity);
-            _previousWay            = _currentWay;
-            
+        }
+
+        private void SetLevelStartCamera()
+        {
             _cineMachineCameraCharacterFollower.Follow = _character.FollowTransform;
             _cineMachineCameraCharacterFollower.LookAt = _character.FollowTransform;
             
@@ -68,14 +102,9 @@ namespace Views
                 _cameraTween.Kill();
                 _cameraTween = null;
             }
-            
-            _character.SetSpeed(_gameVariables.CharacterMoveSpeed);
-            _levelEndCameraParent.SetParent(_characterParent);
-            _currentWay.SetMoveSpeed(_gameVariables.WayMoveDuration);
-            
-            MoveCurrentWay();
-            SetCharacterState(CharacterState.Running);
         }
+        
+        #endregion
 
         public void FinishLevel()
         {
@@ -164,7 +193,6 @@ namespace Views
                 }
 
                 // Move character to the top center of the current way
-                //Vector3 characterPosition = new Vector3(remainingPosition.x, remainingPosition.y + remainingSize.y / 2, remainingPosition.z);
                 _character.MoveX(remainingPosition.x);
                 
                 ViewEvents.WayCutSuccess();
