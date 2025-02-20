@@ -57,8 +57,8 @@ namespace Views
                                                   Quaternion.identity);
             _previousWay            = _currentWay;
             
-            _cineMachineCameraCharacterFollower.Follow = _character.transform;
-            _cineMachineCameraCharacterFollower.LookAt = _character.transform;
+            _cineMachineCameraCharacterFollower.Follow = _character.FollowTransform;
+            _cineMachineCameraCharacterFollower.LookAt = _character.FollowTransform;
             
             _cineMachineCameraCharacterFollower.gameObject.SetActive(true);
             _cineMachineCameraLevelEnd         .gameObject.SetActive(false);
@@ -74,6 +74,7 @@ namespace Views
             _currentWay.SetMoveSpeed(_gameVariables.WayMoveDuration);
             
             MoveCurrentWay();
+            SetCharacterState(CharacterState.Running);
         }
 
         public void FinishLevel()
@@ -81,7 +82,7 @@ namespace Views
             _canMove    = false;
             _isFinished = true;
             _moveTween.Kill();
-            
+
             SetCharacterState(CharacterState.Dancing);
             RotateCameraAroundCharacter();
         }
@@ -163,8 +164,8 @@ namespace Views
                 }
 
                 // Move character to the top center of the current way
-                Vector3 characterPosition = new Vector3(remainingPosition.x, remainingPosition.y + remainingSize.y / 2, remainingPosition.z);
-                _character.MoveTo(characterPosition);
+                //Vector3 characterPosition = new Vector3(remainingPosition.x, remainingPosition.y + remainingSize.y / 2, remainingPosition.z);
+                _character.MoveX(remainingPosition.x);
                 
                 ViewEvents.WayCutSuccess();
             }
