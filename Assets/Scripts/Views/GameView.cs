@@ -12,6 +12,7 @@ namespace Views
         [SerializeField] private GameObject _characterPrefab;
         [SerializeField] private GameObject _wayObject;
         [SerializeField] private GameObject _levelEndPlatform;
+        [SerializeField] private GameObject _background;
         [SerializeField] private Transform  _characterParent;
         [SerializeField] private Transform  _wayParent;
 
@@ -33,8 +34,7 @@ namespace Views
         
         public void Initialize(GameVariables gameVariables)
         {
-            _gameVariables = gameVariables;
-
+            _gameVariables   = gameVariables;
             _wayMoveDistance = _gameVariables.WayMoveDistance;
         }
 
@@ -45,6 +45,7 @@ namespace Views
             SpawnCharacter();
             SpawnCurrentWay();
             SpawnLevelEndPlatform(wayCount);
+            SpawnBackground();
             SetLevelStartCamera();
             
             _character           .SetSpeed(_gameVariables.CharacterMoveSpeed);
@@ -87,6 +88,12 @@ namespace Views
             _levelEndPlatformObject = Instantiate(_levelEndPlatform, 
                                                   levelEndPosition, 
                                                   Quaternion.identity);
+        }
+        
+        private void SpawnBackground()
+        {
+            Vector3 backgroundPosition = new Vector3(0f, 0f, 0f);
+            Instantiate(_background, backgroundPosition, Quaternion.identity);
         }
 
         private void SetLevelStartCamera()

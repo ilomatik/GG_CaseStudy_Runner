@@ -112,6 +112,7 @@ MonoBehaviour:
   _characterPrefab: {fileID: 4947823354526004330, guid: eebf630557290504cb94f1701923a762, type: 3}
   _wayObject: {fileID: 7902569831392485866, guid: 90d82556e45379949b40100b6b325a29, type: 3}
   _levelEndPlatform: {fileID: 1634568768914036164, guid: c91c116a87127164f8254ab8374254a2, type: 3}
+  _background: {fileID: 900316003266058537, guid: ed506f48d4dad7e41a6201668e101c34, type: 3}
   _characterParent: {fileID: 7407304152762193184}
   _wayParent: {fileID: 3633158255386630510}
 --- !u!1001 &3196707492936976776
