@@ -1,3 +1,5 @@
+using System;
+using DG.Tweening;
 using Events;
 using UnityEngine;
 
@@ -7,12 +9,14 @@ namespace Managers
     {
         [SerializeField] private GameObject _characterStepParticle;
         [SerializeField] private GameObject _levelEndParticle;
+        [SerializeField] private GameObject _wayCuttingParticle;
         
         public void SubscribeEvents()
         {
             ViewEvents.OnCharacterLeftStep  += PlayCharacterLeftStepParticle;
             ViewEvents.OnCharacterRightStep += PlayCharacterRightStepParticle;
             ViewEvents.OnLevelSuccess       += PlayLevelEndParticle;
+            ViewEvents.OnWayCuttingParticle += PlayWayCuttingParticle;
         }
         
         public void UnsubscribeEvents()
@@ -20,6 +24,7 @@ namespace Managers
             ViewEvents.OnCharacterLeftStep  -= PlayCharacterLeftStepParticle;
             ViewEvents.OnCharacterRightStep -= PlayCharacterRightStepParticle;
             ViewEvents.OnLevelSuccess       -= PlayLevelEndParticle;
+            ViewEvents.OnWayCuttingParticle -= PlayWayCuttingParticle;
         }
 
         private void PlayCharacterLeftStepParticle(Vector3 position)
@@ -41,6 +46,19 @@ namespace Managers
             if (_levelEndParticle == null) return;
 
             Instantiate(_levelEndParticle, position, Quaternion.identity);
+        }
+        
+        private void PlayWayCuttingParticle(Vector3 spawnPosition, Vector3 targetPosition, Action stopAction)
+        {
+            if (_wayCuttingParticle == null) return;
+
+            GameObject cuttingParticle = Instantiate(_wayCuttingParticle, spawnPosition, Quaternion.identity);
+            
+            cuttingParticle.transform.DOMove(targetPosition, 2f).OnComplete(() =>
+            {
+                stopAction?.Invoke();
+                Destroy(cuttingParticle);
+            });
         }
     }
 }

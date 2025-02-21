@@ -235,9 +235,19 @@ namespace Views
                     GameObject nonOverlapObject = Instantiate(_wayObject, nonOverlapPosition, Quaternion.identity, _wayParent);
                     nonOverlapObject.transform.localScale = nonOverlapScale;
                     nonOverlapObject.layer = 7; // Set the layer to "CuttedWay" layer
-
-                    nonOverlapObject.GetComponent<WayView>().TurnOnGravity();
-                    Destroy(nonOverlapObject, 2.0f); // Adjust the delay as needed
+                    
+                    bool isLeft = nonOverlapCenterX < currentBounds.center.x;
+                    
+                    Bounds  bounds           = nonOverlapObject.GetComponent<Renderer>().bounds;
+                    Vector3 particlePosition = new Vector3(isLeft ? bounds.max.x : bounds.min.x, bounds.max.y, isLeft ? bounds.min.z : bounds.max.z);
+                    Vector3 particleTarget   = new Vector3(isLeft ? bounds.max.x : bounds.min.x, bounds.max.y, isLeft ? bounds.max.z : bounds.min.z);
+                    Vector3 additionalVector = Vector3.up * 0.1f;
+                    
+                    ViewEvents.WayCuttingParticle(particlePosition + additionalVector, particleTarget + additionalVector, () =>
+                    {
+                        nonOverlapObject.GetComponent<WayView>().TurnOnGravity();
+                        Destroy(nonOverlapObject, 2.0f); // Adjust the delay as needed
+                    });
                 }
 
                 // Move character to the top center of the current way

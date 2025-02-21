@@ -11,6 +11,8 @@ namespace Events
         public static Action<Vector3> OnCharacterLeftStep;
         public static Action<Vector3> OnCharacterRightStep;
         public static Action<Vector3> OnLevelSuccess;
+        
+        public static Action<Vector3, Vector3, Action> OnWayCuttingParticle;
 
         public static void TouchScreen()   { OnTouchScreen?.Invoke(); }
         public static void WayCutSuccess() { OnWayCutSuccess?.Invoke(); }
@@ -18,5 +20,10 @@ namespace Events
         public static void CharacterLeftStep(Vector3 position)  { OnCharacterLeftStep?.Invoke(position); }
         public static void CharacterRightStep(Vector3 position) { OnCharacterRightStep?.Invoke(position); }
         public static void LevelSuccess(Vector3 position)       { OnLevelSuccess?.Invoke(position); }
+        
+        public static void WayCuttingParticle(Vector3 spawnPosition, Vector3 targetPosition, Action stopAction)
+        {
+            OnWayCuttingParticle?.Invoke(spawnPosition, targetPosition, stopAction);
+        }
     }
 }

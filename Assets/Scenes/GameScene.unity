@@ -464,6 +464,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterStepParticle: {fileID: 187952, guid: c05e92eaee7a00844867e5edc8e0dde1, type: 3}
   _levelEndParticle: {fileID: 137134, guid: 6bc8c7b8a20b3574080cc6fa394ec725, type: 3}
+  _wayCuttingParticle: {fileID: 117216, guid: 0b3290bbf8a12354887e608a61e4f86a, type: 3}
 --- !u!4 &1399216428
 Transform:
   m_ObjectHideFlags: 0
