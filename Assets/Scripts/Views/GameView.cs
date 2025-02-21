@@ -228,26 +228,7 @@ namespace Views
                 
                 if (nonOverlapSize > 0)
                 {
-                    float   nonOverlapCenterX  = (currentMinX < previousMinX) ? currentMinX + nonOverlapSize / 2 : currentMaxX - nonOverlapSize / 2;
-                    Vector3 nonOverlapPosition = new Vector3(nonOverlapCenterX, currentBounds.center.y, currentBounds.center.z);
-                    Vector3 nonOverlapScale    = new Vector3(nonOverlapSize, currentBounds.size.y, currentBounds.size.z);
-
-                    GameObject nonOverlapObject = Instantiate(_wayObject, nonOverlapPosition, Quaternion.identity, _wayParent);
-                    nonOverlapObject.transform.localScale = nonOverlapScale;
-                    nonOverlapObject.layer = 7; // Set the layer to "CuttedWay" layer
-                    
-                    bool isLeft = nonOverlapCenterX < currentBounds.center.x;
-                    
-                    Bounds  bounds           = nonOverlapObject.GetComponent<Renderer>().bounds;
-                    Vector3 particlePosition = new Vector3(isLeft ? bounds.max.x : bounds.min.x, bounds.max.y, isLeft ? bounds.min.z : bounds.max.z);
-                    Vector3 particleTarget   = new Vector3(isLeft ? bounds.max.x : bounds.min.x, bounds.max.y, isLeft ? bounds.max.z : bounds.min.z);
-                    Vector3 additionalVector = Vector3.up * 0.1f;
-                    
-                    ViewEvents.WayCuttingParticle(particlePosition + additionalVector, particleTarget + additionalVector, () =>
-                    {
-                        nonOverlapObject.GetComponent<WayView>().TurnOnGravity();
-                        Destroy(nonOverlapObject, 2.0f); // Adjust the delay as needed
-                    });
+                    SpawnNonOverlapWay(nonOverlapSize, currentBounds, currentMinX, previousMinX, currentMaxX);
                 }
 
                 // Move character to the top center of the current way
@@ -265,6 +246,34 @@ namespace Views
             }
 
             return _overlap > 0;
+        }
+        
+        private void SpawnNonOverlapWay(float nonOverlapSize, 
+                                        Bounds currentBounds, 
+                                        float currentMinX, 
+                                        float previousMinX, 
+                                        float currentMaxX)
+        {
+            float   nonOverlapCenterX  = (currentMinX < previousMinX) ? currentMinX + nonOverlapSize / 2 : currentMaxX - nonOverlapSize / 2;
+            Vector3 nonOverlapPosition = new Vector3(nonOverlapCenterX, currentBounds.center.y, currentBounds.center.z);
+            Vector3 nonOverlapScale    = new Vector3(nonOverlapSize, currentBounds.size.y, currentBounds.size.z);
+
+            GameObject nonOverlapObject = Instantiate(_wayObject, nonOverlapPosition, Quaternion.identity, _wayParent);
+            nonOverlapObject.transform.localScale = nonOverlapScale;
+            nonOverlapObject.layer = 7; // Set the layer to "CuttedWay" layer
+                    
+            bool isLeft = nonOverlapCenterX < currentBounds.center.x;
+                    
+            Bounds  bounds           = nonOverlapObject.GetComponent<Renderer>().bounds;
+            Vector3 particlePosition = new Vector3(isLeft ? bounds.max.x : bounds.min.x, bounds.max.y, isLeft ? bounds.min.z : bounds.max.z);
+            Vector3 particleTarget   = new Vector3(isLeft ? bounds.max.x : bounds.min.x, bounds.max.y, isLeft ? bounds.max.z : bounds.min.z);
+            Vector3 additionalVector = Vector3.up * 0.1f;
+                    
+            ViewEvents.WayCuttingParticle(particlePosition + additionalVector, particleTarget + additionalVector, () =>
+            {
+                nonOverlapObject.GetComponent<WayView>().TurnOnGravity();
+                Destroy(nonOverlapObject, 2.0f); // Adjust the delay as needed
+            });
         }
 
         private void SpawnNextWay()
