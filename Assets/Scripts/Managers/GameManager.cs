@@ -9,6 +9,7 @@ namespace  Managers
 {
     public class GameManager : MonoBehaviour
     {
+        [SerializeField] private ParticleManager          _particleManager;
         [SerializeField] private GameVariables            _gameVariables;
         [SerializeField] private GameObject               _gameView;
         [SerializeField] private CinemachineVirtualCamera _cineMachineCameraCharacterFollower;
@@ -24,6 +25,8 @@ namespace  Managers
             
             _gameController = new GameController(view);
             _gameController.SubscribeEvents();
+            _particleManager.SubscribeEvents();
+            
             _gameController.LoadLevel(_gameVariables.LevelWayCount, _cineMachineCameraCharacterFollower, _cineMachineCameraLevelEnd);
         }
 
@@ -38,6 +41,7 @@ namespace  Managers
         private void OnDestroy()
         {
             _gameController.UnsubscribeEvents();
+            _particleManager.UnsubscribeEvents();
         }
     }
 }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7655ff21923d42c5bb13f7ee693883eb, type: 3}
   m_Name: GameVariables
   m_EditorClassIdentifier: 
-  _characterMoveSpeed: 1
+  _characterMoveSpeed: 2
   _wayMoveDuration: 1
   _wayMoveDistance: 3
   _levelWayCount: 5

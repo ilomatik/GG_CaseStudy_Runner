@@ -1,3 +1,4 @@
+using Events;
 using UnityEngine;
 
 namespace Views
@@ -8,7 +9,8 @@ namespace Views
         {
             if (other.transform.CompareTag("Player"))
             {
-                Events.GameEvents.LevelSuccess();
+                GameEvents.LevelSuccess();
+                ViewEvents.LevelSuccess(transform.position + Vector3.up);
             }
         }
     }

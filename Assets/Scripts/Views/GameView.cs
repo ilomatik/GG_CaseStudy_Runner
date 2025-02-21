@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cinemachine;
 using DG.Tweening;
@@ -104,6 +105,7 @@ namespace Views
             Vector3 backgroundPosition = new Vector3(0f, 0f, 0f);
             Instantiate(_background, backgroundPosition, Quaternion.identity);
         }
+        
         public void SetCineMachineCamera(CinemachineVirtualCamera cineMachineCameraCharacterFollower, CinemachineVirtualCamera cineMachineCameraLevelEnd)
         {
             _cineMachineCameraCharacterFollower = cineMachineCameraCharacterFollower;
@@ -226,7 +228,7 @@ namespace Views
                 
                 if (nonOverlapSize > 0)
                 {
-                    float nonOverlapCenterX    = (currentMinX < previousMinX) ? currentMinX + nonOverlapSize / 2 : currentMaxX - nonOverlapSize / 2;
+                    float   nonOverlapCenterX  = (currentMinX < previousMinX) ? currentMinX + nonOverlapSize / 2 : currentMaxX - nonOverlapSize / 2;
                     Vector3 nonOverlapPosition = new Vector3(nonOverlapCenterX, currentBounds.center.y, currentBounds.center.z);
                     Vector3 nonOverlapScale    = new Vector3(nonOverlapSize, currentBounds.size.y, currentBounds.size.z);
 
